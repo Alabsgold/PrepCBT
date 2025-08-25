@@ -1,0 +1,68 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Student Dashboard - PrepCBT{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Student Dashboard</h2>
+    <span class="badge bg-primary">Student</span>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Available Quizzes</h4>
+            </div>
+            <div class="card-body">
+                {% if quizzes %}
+                    <div class="list-group">
+                        {% for quiz in quizzes %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">{{ quiz.title }}</h5>
+                                    <p class="mb-1">Subject: {{ quiz.subject }}</p>
+                                    <small>Time Limit: {{ quiz.time_limit_minutes }} minutes</small>
+                                </div>
+                                <a href="{% url 'take_quiz' quiz.id %}" class="btn btn-primary">Take Quiz</a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No quizzes available at the moment.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h4>Your Recent Results</h4>
+            </div>
+            <div class="card-body">
+                {% if results %}
+                    <div class="list-group">
+                        {% for result in results|slice:":5" %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ result.quiz.title }}</strong>
+                                    <span class="badge {% if result.score >= 70 %}bg-success{% elif result.score >= 50 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ result.score|floatformat:1 }}%
+                                    </span>
+                                </div>
+                                <small class="text-muted">Completed on: {{ result.completed_on|date:"M d, Y" }}</small>
+                                <div class="mt-2">
+                                    <a href="{% url 'review_quiz' result.quiz.id %}" class="btn btn-sm btn-outline-primary">Review</a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">You haven't taken any quizzes yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

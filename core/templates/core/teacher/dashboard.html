@@ -1,0 +1,86 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Teacher Dashboard - PrepCBT{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Teacher Dashboard</h2>
+    <span class="badge bg-success">Teacher</span>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">{{ quizzes.count }}</h5>
+                <p class="card-text">Total Quizzes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">{{ total_questions }}</h5>
+                <p class="card-text">Total Questions</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">{{ total_results }}</h5>
+                <p class="card-text">Quiz Attempts</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4>Your Quizzes</h4>
+        <a href="{% url 'create_quiz' %}" class="btn btn-primary">Create New Quiz</a>
+    </div>
+    <div class="card-body">
+        {% if quizzes %}
+            <div class="list-group">
+                {% for quiz in quizzes %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">{{ quiz.title }}</h5>
+                            <p class="mb-1">Subject: {{ quiz.subject }}</p>
+                            <small>Questions: {{ quiz.questions.count }} | Time Limit: {{ quiz.time_limit_minutes }} minutes</small>
+                        </div>
+                        <div>
+                            <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-sm btn-outline-primary">Manage</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">You haven't created any quizzes yet.</p>
+            <a href="{% url 'create_quiz' %}" class="btn btn-primary">Create Your First Quiz</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // These values would normally come from the view context
+    // For now, we'll set them to 0
+    document.addEventListener('DOMContentLoaded', function() {
+        const totalQuestionsElement = document.querySelector('.col-md-4:nth-child(2) .card-title');
+        const totalResultsElement = document.querySelector('.col-md-4:nth-child(3) .card-title');
+        
+        // Calculate total questions
+        let totalQuestions = 0;
+        {% for quiz in quizzes %}
+            totalQuestions += {{ quiz.questions.count }};
+        {% endfor %}
+        totalQuestionsElement.textContent = totalQuestions;
+        
+        // Set total results to 0 for now (would need to be calculated in the view)
+        totalResultsElement.textContent = '0';
+    });
+</script>
+{% endblock %}

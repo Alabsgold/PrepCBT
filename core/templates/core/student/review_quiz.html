@@ -1,0 +1,53 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Review Quiz - PrepCBT{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3>Review: {{ quiz.title }}</h3>
+        <p class="text-muted">Your score: {{ result.score|floatformat:1 }}%</p>
+    </div>
+    <div class="card-body">
+        {% for question in questions %}
+            <div class="card mb-4 {% if question.correct_answer == 'A' %}border-success{% else %}border-light{% endif %}">
+                <div class="card-header">
+                    <h5>Question {{ forloop.counter }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ question.text }}</p>
+                    
+                    <div class="list-group">
+                        <div class="list-group-item {% if question.correct_answer == 'A' %}list-group-item-success{% endif %}">
+                            A. {{ question.option_a }}
+                            {% if question.correct_answer == 'A' %}<span class="badge bg-success float-end">Correct</span>{% endif %}
+                        </div>
+                        <div class="list-group-item {% if question.correct_answer == 'B' %}list-group-item-success{% endif %}">
+                            B. {{ question.option_b }}
+                            {% if question.correct_answer == 'B' %}<span class="badge bg-success float-end">Correct</span>{% endif %}
+                        </div>
+                        <div class="list-group-item {% if question.correct_answer == 'C' %}list-group-item-success{% endif %}">
+                            C. {{ question.option_c }}
+                            {% if question.correct_answer == 'C' %}<span class="badge bg-success float-end">Correct</span>{% endif %}
+                        </div>
+                        <div class="list-group-item {% if question.correct_answer == 'D' %}list-group-item-success{% endif %}">
+                            D. {{ question.option_d }}
+                            {% if question.correct_answer == 'D' %}<span class="badge bg-success float-end">Correct</span>{% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if question.rationale %}
+                        <div class="alert alert-info mt-3">
+                            <strong>Explanation:</strong> {{ question.rationale }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        
+        <div class="mt-4">
+            <a href="{% url 'student_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

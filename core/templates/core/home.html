@@ -1,0 +1,46 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="jumbotron bg-light p-5 rounded-lg m-3">
+    <h1 class="display-4">Welcome to PrepCBT</h1>
+    <p class="lead">Your premier platform for practicing Computer Based Tests for JAMB, WAEC, and Post-UTME examinations.</p>
+    <hr class="my-4">
+    <p>Join thousands of Nigerian students preparing for their exams with our comprehensive test platform.</p>
+    {% if not user.is_authenticated %}
+        <a class="btn btn-primary btn-lg me-2" href="{% url 'student_register' %}" role="button">Register as Student</a>
+        <a class="btn btn-outline-primary btn-lg" href="{% url 'teacher_register' %}" role="button">Register as Teacher</a>
+    {% else %}
+        <a class="btn btn-primary btn-lg" href="{% url 'dashboard' %}" role="button">Go to Dashboard</a>
+    {% endif %}
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-graduation-cap fa-3x text-primary mb-3"></i>
+                <h3>For Students</h3>
+                <p>Practice with thousands of questions, track your progress, and improve your scores.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-chalkboard-teacher fa-3x text-primary mb-3"></i>
+                <h3>For Teachers</h3>
+                <p>Create custom quizzes, add questions with explanations, and monitor student performance.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-mobile-alt fa-3x text-primary mb-3"></i>
+                <h3>Mobile Friendly</h3>
+                <p>Access your tests from any device - desktop, tablet, or mobile phone.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

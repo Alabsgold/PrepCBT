@@ -1,0 +1,94 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Manage Quiz - PrepCBT{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3>Manage Quiz: {{ quiz.title }}</h3>
+        <div>
+            <a href="{% url 'teacher_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <p><strong>Subject:</strong> {{ quiz.subject }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Time Limit:</strong> {{ quiz.time_limit_minutes }} minutes</p>
+            </div>
+        </div>
+        
+        <h4>Add New Question</h4>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Add Question</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h4>Questions ({{ quiz.questions.count }})</h4>
+    </div>
+    <div class="card-body">
+        {% if quiz.questions.all %}
+            <div class="list-group">
+                {% for question in quiz.questions.all %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">Question {{ forloop.counter }}</h5>
+                                <p class="mb-1">{{ question.text }}</p>
+                                <div class="row mt-2">
+                                    <div class="col-md-6">
+                                        <small class="text-muted">A. {{ question.option_a }}</small><br>
+                                        <small class="text-muted">B. {{ question.option_b }}</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <small class="text-muted">C. {{ question.option_c }}</small><br>
+                                        <small class="text-muted">D. {{ question.option_d }}</small>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <span class="badge bg-info">Correct Answer: {{ question.correct_answer }}</span>
+                                    {% if question.rationale %}
+                                        <p class="mt-1"><small>Rationale: {{ question.rationale }}</small></p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div>
+                                <a href="{% url 'edit_question' question.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">No questions added yet. Add your first question above.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add Bootstrap classes to form fields
+    document.querySelectorAll('input, select, textarea').forEach(field => {
+        field.classList.add('form-control');
+    });
+</script>
+{% endblock %}

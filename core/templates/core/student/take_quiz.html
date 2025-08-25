@@ -1,0 +1,112 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Take Quiz - PrepCBT{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3>{{ quiz.title }}</h3>
+        <div class="timer-container">
+            <span class="badge bg-danger" id="timer">Time Remaining: {{ quiz.time_limit_minutes }}:00</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">Subject: {{ quiz.subject }} | Questions: {{ questions.count }}</p>
+        
+        <form id="quiz-form" method="post">
+            {% csrf_token %}
+            
+            {% for question in questions %}
+                <div class="card mb-4 question-card">
+                    <div class="card-header">
+                        <h5>Question {{ forloop.counter }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">{{ question.text }}</p>
+                        
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_a" value="A">
+                            <label class="form-check-label" for="q{{ question.id }}_a">
+                                A. {{ question.option_a }}
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_b" value="B">
+                            <label class="form-check-label" for="q{{ question.id }}_b">
+                                B. {{ question.option_b }}
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_c" value="C">
+                            <label class="form-check-label" for="q{{ question.id }}_c">
+                                C. {{ question.option_c }}
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_d" value="D">
+                            <label class="form-check-label" for="q{{ question.id }}_d">
+                                D. {{ question.option_d }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            
+            <button type="submit" class="btn btn-primary btn-lg">Submit Answers</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const timeLimitMinutes = {{ quiz.time_limit_minutes }};
+        let timeRemaining = timeLimitMinutes * 60; // Convert to seconds
+        const timerElement = document.getElementById('timer');
+        const quizForm = document.getElementById('quiz-form');
+        
+        function updateTimer() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            
+            timerElement.textContent = `Time Remaining: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                alert('Time is up! Your quiz will be submitted automatically.');
+                quizForm.submit();
+            }
+            
+            timeRemaining--;
+        }
+        
+        // Update timer immediately and then every second
+        updateTimer();
+        const timerInterval = setInterval(updateTimer, 1000);
+        
+        // Handle form submission
+        quizForm.addEventListener('submit', function(e) {
+            clearInterval(timerInterval);
+            
+            // Validate that all questions are answered
+            const unansweredQuestions = [];
+            document.querySelectorAll('.question-card').forEach((card, index) => {
+                const questionName = `question_{{ question.id }}`;
+                const answered = card.querySelector('input[type="radio"]:checked');
+                if (!answered) {
+                    unansweredQuestions.push(index + 1);
+                }
+            });
+            
+            if (unansweredQuestions.length > 0) {
+                e.preventDefault();
+                const confirmSubmit = confirm(`You haven't answered questions: ${unansweredQuestions.join(', ')}. Are you sure you want to submit?`);
+                if (confirmSubmit) {
+                    quizForm.submit();
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
