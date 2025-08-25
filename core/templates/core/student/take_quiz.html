@@ -7,7 +7,9 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h3>{{ quiz.title }}</h3>
         <div class="timer-container">
-            <span class="badge bg-danger" id="timer">Time Remaining: {{ quiz.time_limit_minutes }}:00</span>
+            <span class="badge bg-danger" id="timer" data-time-limit-minutes="{{ quiz.time_limit_minutes }}">
+                Time Remaining: {{ quiz.time_limit_minutes }}:00
+            </span>
         </div>
     </div>
     <div class="card-body">
@@ -17,33 +19,41 @@
             {% csrf_token %}
             
             {% for question in questions %}
-                <div class="card mb-4 question-card">
+                {% comment %} 
+                Alabi's Note: Added a data-question-id attribute here. 
+                This is the proper way to pass data from Django to JavaScript.
+                {% endcomment %}
+                <div class="card mb-4 question-card" data-question-id="{{ question.id }}">
                     <div class="card-header">
                         <h5>Question {{ forloop.counter }}</h5>
                     </div>
                     <div class="card-body">
                         <p class="card-text">{{ question.text }}</p>
                         
+                        {% comment %} 
+                        Alabi's Note: This structure is still rigid. See my recommendation below.
+                        But for now, the fix is to make sure the name is unique and correct.
+                        {% endcomment %}
                         <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_a" value="A">
+                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_a" value="A" required>
                             <label class="form-check-label" for="q{{ question.id }}_a">
                                 A. {{ question.option_a }}
                             </label>
                         </div>
                         <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_b" value="B">
+                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_b" value="B" required>
                             <label class="form-check-label" for="q{{ question.id }}_b">
                                 B. {{ question.option_b }}
                             </label>
                         </div>
                         <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_c" value="C">
+                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_c" value="C" required>
                             <label class="form-check-label" for="q{{ question.id }}_c">
                                 C. {{ question.option_c }}
                             </label>
                         </div>
                         <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_d" value="D">
+                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_d" value="D" required>
                             <label class="form-check-label" for="q{{ question.id }}_d">
                                 D. {{ question.option_d }}
                             </label>
@@ -52,7 +62,7 @@
                 </div>
             {% endfor %}
             
-            <button type="submit" class="btn btn-primary btn-lg">Submit Answers</button>
+            <button type="submit" id="submit-btn" class="btn btn-primary btn-lg">Submit Answers</button>
         </form>
     </div>
 </div>
@@ -60,53 +70,72 @@
 
 {% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const timeLimitMinutes = {{ quiz.time_limit_minutes }};
-        let timeRemaining = timeLimitMinutes * 60; // Convert to seconds
-        const timerElement = document.getElementById('timer');
-        const quizForm = document.getElementById('quiz-form');
-        
-        function updateTimer() {
-            const minutes = Math.floor(timeRemaining / 60);
-            const seconds = timeRemaining % 60;
-            
-            timerElement.textContent = `Time Remaining: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            if (timeRemaining <= 0) {
-                clearInterval(timerInterval);
-                alert('Time is up! Your quiz will be submitted automatically.');
-                quizForm.submit();
-            }
-            
-            timeRemaining--;
+document.addEventListener('DOMContentLoaded', function() {
+    const timerElement = document.getElementById('timer');
+    const quizForm = document.getElementById('quiz-form');
+    const submitBtn = document.getElementById('submit-btn');
+
+    // --- Timer Logic ---
+    const timeLimitMinutes = parseInt(timerElement.getAttribute('data-time-limit-minutes'), 10);
+    let timeRemaining = timeLimitMinutes * 60;
+    
+    // Alabi's Note: A flag to prevent multiple submissions
+    let isSubmitting = false;
+
+    function submitQuiz() {
+        if (!isSubmitting) {
+            isSubmitting = true;
+            alert('Submitting your answers.');
+            quizForm.submit();
         }
-        
-        // Update timer immediately and then every second
-        updateTimer();
-        const timerInterval = setInterval(updateTimer, 1000);
-        
-        // Handle form submission
-        quizForm.addEventListener('submit', function(e) {
+    }
+
+    const timerInterval = setInterval(() => {
+        if (timeRemaining <= 0) {
             clearInterval(timerInterval);
+            timerElement.textContent = "Time's Up!";
+            submitQuiz();
+            return;
+        }
+
+        timeRemaining--;
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        timerElement.textContent = `Time Remaining: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+    }, 1000);
+
+    // --- Form Submission Logic ---
+    submitBtn.addEventListener('click', function(e) {
+        e.preventDefault(); // <-- Always prevent default on button click to run validation
+        
+        const unansweredQuestions = [];
+        const questionCards = document.querySelectorAll('.question-card');
+        
+        questionCards.forEach((card, index) => {
+            const questionId = card.getAttribute('data-question-id');
+            const name = `question_${questionId}`;
             
-            // Validate that all questions are answered
-            const unansweredQuestions = [];
-            document.querySelectorAll('.question-card').forEach((card, index) => {
-                const questionName = `question_{{ question.id }}`;
-                const answered = card.querySelector('input[type="radio"]:checked');
-                if (!answered) {
-                    unansweredQuestions.push(index + 1);
-                }
-            });
-            
-            if (unansweredQuestions.length > 0) {
-                e.preventDefault();
-                const confirmSubmit = confirm(`You haven't answered questions: ${unansweredQuestions.join(', ')}. Are you sure you want to submit?`);
-                if (confirmSubmit) {
-                    quizForm.submit();
-                }
+            // Alabi's Note: A much more reliable check for an answered question
+            const isAnswered = quizForm.querySelector(`input[name="${name}"]:checked`);
+
+            if (!isAnswered) {
+                unansweredQuestions.push(index + 1); // Get the question number (e.g., 1, 2, 3...)
             }
         });
+
+        if (unansweredQuestions.length > 0) {
+            const confirmSubmit = confirm(`You have not answered question(s): ${unansweredQuestions.join(', ')}.\nAre you sure you want to submit?`);
+            if (confirmSubmit) {
+                clearInterval(timerInterval); // Stop timer before submitting
+                submitQuiz();
+            }
+        } else {
+            // All questions are answered
+            clearInterval(timerInterval);
+            submitQuiz();
+        }
     });
+});
 </script>
 {% endblock %}

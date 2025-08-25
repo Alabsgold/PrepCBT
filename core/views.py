@@ -3,6 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.http import JsonResponse
+from django.db.models import Count, Sum
+from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
 from .decorators import student_required, teacher_required
 from .models import Quiz, Question, Result, User
 from .forms import StudentRegistrationForm, TeacherRegistrationForm, QuizForm, QuestionForm
@@ -52,11 +55,38 @@ def student_dashboard(request):
     })
 
 @login_required
-@teacher_required
 def teacher_dashboard(request):
-    quizzes = Quiz.objects.filter(creator=request.user)
-    return render(request, 'core/teacher/dashboard.html', {'quizzes': quizzes})
+    # First, get the quizzes for ONLY the logged-in teacher.
+    # This prevents data leaks.
+    quizzes_list = Quiz.objects.filter(teacher=request.user)
 
+    # --- This is where the magic happens ---
+    # We use annotations to solve the N+1 query problem.
+    # This single, efficient query gets each quiz AND its question count.
+    quizzes_with_counts = quizzes_list.annotate(question_count=Count('questions'))
+
+    # Now, we do all calculations on the server in one go.
+    # We use the already-fetched queryset to avoid more DB hits.
+    stats = quizzes_with_counts.aggregate(
+        total_quizzes=Count('id'),
+        total_questions=Sum('question_count'),
+        # Assuming you have a Result model linked to Quiz
+        total_results=Count('results') 
+    )
+
+    # --- Add Pagination ---
+    paginator = Paginator(quizzes_with_counts, 10) # Show 10 quizzes per page
+    page_number = request.GET.get('page')
+    quizzes_page = paginator.get_page(page_number)
+
+    context = {
+        'quizzes': quizzes_page,  # Pass the paginated page object
+        'total_quizzes': stats.get('total_quizzes', 0),
+        'total_questions': stats.get('total_questions', 0),
+        'total_results': stats.get('total_results', 0),
+    }
+    
+    return render(request, 'teacher/dashboard.html', context)
 @login_required
 @teacher_required
 def create_quiz(request):
@@ -144,13 +174,41 @@ def take_quiz(request, quiz_id):
 
 @login_required
 @student_required
-def quiz_result(request, quiz_id):
-    quiz = get_object_or_404(Quiz, id=quiz_id)
-    result = get_object_or_404(Result, student=request.user, quiz=quiz)
-    return render(request, 'core/student/quiz_result.html', {
+# Assuming you have a view that renders this template
+def quiz_result(request, quiz_id, result_id):
+    # ... (your existing code to get quiz and result objects) ...
+    result = Result.objects.get(id=result_id)
+    quiz = Quiz.objects.get(id=quiz_id)
+
+    score = result.score
+    
+    # --- The new logic belongs here, in the view ---
+    if score >= 70:
+        performance = {
+            "status": "success",
+            "message": "Excellent Performance!",
+            "color_hex": "#4CAF50"
+        }
+    elif score >= 50:
+        performance = {
+            "status": "warning",
+            "message": "Good Attempt!",
+            "color_hex": "#FFC107"
+        }
+    else:
+        performance = {
+            "status": "danger",
+            "message": "Needs Improvement",
+            "color_hex": "#F44336"
+        }
+
+    context = {
         'quiz': quiz,
-        'result': result
-    })
+        'result': result,
+        'performance': performance # Pass the whole dictionary to the template
+    }
+    
+    return render(request, 'templates/core/student/quiz_result.html', context)
 
 @login_required
 @student_required

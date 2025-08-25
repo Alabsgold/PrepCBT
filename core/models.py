@@ -16,21 +16,14 @@ class Quiz(models.Model):
         return self.title
 
 class Question(models.Model):
-    ANSWER_CHOICES = [
-        ('A', 'Option A'),
-        ('B', 'Option B'),
-        ('C', 'Option C'),
-        ('D', 'Option D'),
-    ]
-    
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')
     text = models.TextField()
-    option_a = models.CharField(max_length=200)
-    option_b = models.CharField(max_length=200)
-    option_c = models.CharField(max_length=200)
-    option_d = models.CharField(max_length=200)
-    correct_answer = models.CharField(max_length=1, choices=ANSWER_CHOICES)
-    rationale = models.TextField(blank=True)
+    # Remove option_a, option_b, etc. from here
+    
+class Option(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='options')
+    text = models.CharField(max_length=255)
+    is_correct = models.BooleanField(default=False)
     
     def __str__(self):
         return self.text[:50]  # Return first 50 characters of question

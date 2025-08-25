@@ -5,14 +5,14 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Teacher Dashboard</h2>
-    <span class="badge bg-success">Teacher</span>
+    <a href="{% url 'create_quiz' %}" class="btn btn-primary">Create New Quiz</a>
 </div>
 
 <div class="row mb-4">
     <div class="col-md-4">
         <div class="card text-center">
             <div class="card-body">
-                <h5 class="card-title">{{ quizzes.count }}</h5>
+                <h5 class="card-title" id="total-quizzes-stat">{{ total_quizzes }}</h5>
                 <p class="card-text">Total Quizzes</p>
             </div>
         </div>
@@ -20,7 +20,7 @@
     <div class="col-md-4">
         <div class="card text-center">
             <div class="card-body">
-                <h5 class="card-title">{{ total_questions }}</h5>
+                <h5 class="card-title" id="total-questions-stat">{{ total_questions }}</h5>
                 <p class="card-text">Total Questions</p>
             </div>
         </div>
@@ -28,7 +28,7 @@
     <div class="col-md-4">
         <div class="card text-center">
             <div class="card-body">
-                <h5 class="card-title">{{ total_results }}</h5>
+                <h5 class="card-title" id="total-results-stat">{{ total_results }}</h5>
                 <p class="card-text">Quiz Attempts</p>
             </div>
         </div>
@@ -36,9 +36,8 @@
 </div>
 
 <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="card-header">
         <h4>Your Quizzes</h4>
-        <a href="{% url 'create_quiz' %}" class="btn btn-primary">Create New Quiz</a>
     </div>
     <div class="card-body">
         {% if quizzes %}
@@ -48,7 +47,7 @@
                         <div>
                             <h5 class="mb-1">{{ quiz.title }}</h5>
                             <p class="mb-1">Subject: {{ quiz.subject }}</p>
-                            <small>Questions: {{ quiz.questions.count }} | Time Limit: {{ quiz.time_limit_minutes }} minutes</small>
+                            <small>Questions: {{ quiz.question_count }} | Time Limit: {{ quiz.time_limit_minutes }} minutes</small>
                         </div>
                         <div>
                             <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-sm btn-outline-primary">Manage</a>
@@ -57,30 +56,38 @@
                 {% endfor %}
             </div>
         {% else %}
-            <p class="text-muted">You haven't created any quizzes yet.</p>
-            <a href="{% url 'create_quiz' %}" class="btn btn-primary">Create Your First Quiz</a>
+            <p class="text-muted">You haven't created any quizzes yet. Why not create your first one now?</p>
         {% endif %}
     </div>
+
+    {% if quizzes.has_other_pages %}
+    <div class="card-footer">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if quizzes.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ quizzes.previous_page_number }}">Previous</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                {% endif %}
+
+                <li class="page-item disabled"><span class="page-link">Page {{ quizzes.number }} of {{ quizzes.paginator.num_pages }}</span></li>
+
+                {% if quizzes.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ quizzes.next_page_number }}">Next</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
 </div>
+
 {% endblock %}
 
+{% comment %}
+Alabi's Note: The ENTIRE JavaScript block is gone. It was not needed. It was poison.
+The view now does all the work, as it should.
+{% endcomment %}
 {% block scripts %}
-<script>
-    // These values would normally come from the view context
-    // For now, we'll set them to 0
-    document.addEventListener('DOMContentLoaded', function() {
-        const totalQuestionsElement = document.querySelector('.col-md-4:nth-child(2) .card-title');
-        const totalResultsElement = document.querySelector('.col-md-4:nth-child(3) .card-title');
-        
-        // Calculate total questions
-        let totalQuestions = 0;
-        {% for quiz in quizzes %}
-            totalQuestions += {{ quiz.questions.count }};
-        {% endfor %}
-        totalQuestionsElement.textContent = totalQuestions;
-        
-        // Set total results to 0 for now (would need to be calculated in the view)
-        totalResultsElement.textContent = '0';
-    });
-</script>
 {% endblock %}
