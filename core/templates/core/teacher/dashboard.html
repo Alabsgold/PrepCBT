@@ -51,6 +51,8 @@
                         </div>
                         <div>
                             <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-sm btn-outline-primary">Manage</a>
+
+                            <a href="{% url 'add_question' quiz.id %}" class="btn btn-sm btn-success ms-2">Add Question</a>
                         </div>
                     </div>
                 {% endfor %}
@@ -82,12 +84,4 @@
     </div>
     {% endif %}
 </div>
-
-{% endblock %}
-
-{% comment %}
-Alabi's Note: The ENTIRE JavaScript block is gone. It was not needed. It was poison.
-The view now does all the work, as it should.
-{% endcomment %}
-{% block scripts %}
 {% endblock %}

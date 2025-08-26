@@ -1,0 +1,62 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Add Question to {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3>Add a New Question to "{{ quiz.title }}"</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {{ form.non_field_errors }}
+
+            <div class="mb-3">
+                <label class="form-label">Question Text</label>
+                {{ form.text }}
+                {{ form.text.errors }}
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label">Rationale (Explanation for the answer, optional)</label>
+                {{ form.rationale }}
+                {{ form.rationale.errors }}
+            </div>
+
+            <hr>
+            
+            <h5>Options</h5>
+            <p class="text-muted">Enter the text for each option below and check the box for the single correct answer.</p>
+
+            {{ formset.management_form }}
+            {{ formset.non_form_errors }}
+
+            {% for option_form in formset %}
+                <div class="row align-items-center mb-2">
+                    <div class="col-md-8">
+                        {{ option_form.text }}
+                        {{ option_form.text.errors }}
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            {{ option_form.is_correct }}
+                            <label class="form-check-label" for="{{ option_form.is_correct.id_for_label }}">
+                                Is Correct Answer
+                            </label>
+                            {{ option_form.is_correct.errors }}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Save Question</button>
+                <a href="#" class="btn btn-secondary">Cancel</a>
+            </div>
+
+        </form>
+    </div>
+</div>
+{% endblock %}
