@@ -19,6 +19,7 @@ class Question(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')
     text = models.TextField()
     # Remove option_a, option_b, etc. from here
+    rationale = models.TextField(blank=True, null=True) 
     
 class Option(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='options')
