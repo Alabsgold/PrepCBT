@@ -38,7 +38,8 @@ class QuizForm(forms.ModelForm):
 class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
-        fields = ['text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'rationale']
+        # These are the ONLY fields that actually exist on the Question model now.
+        fields = ['text', 'rationale']
         widgets = {
             'text': forms.Textarea(attrs={'rows': 3}),
             'rationale': forms.Textarea(attrs={'rows': 2}),
