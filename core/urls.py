@@ -12,6 +12,7 @@ urlpatterns = [
     
     # ALABI'S NOTE: Added the new URL for our formset page.
     path('teacher/quiz/<int:quiz_id>/add-question/', views.add_question_to_quiz, name='add_question'),
+    path('teacher/search-quizzes/', views.search_quizzes, name='search_quizzes'),
     
     # These teacher URLs below might need to be updated or removed now that we have the formset.
     # We can review them later.

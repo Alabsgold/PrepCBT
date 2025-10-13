@@ -37,51 +37,21 @@
 
 <div class="card">
     <div class="card-header">
-        <h4>Your Quizzes</h4>
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Your Quizzes</h4>
+            <input
+                type="text"
+                name="q"
+                class="form-control w-50"
+                placeholder="Search quizzes by title..."
+                hx-get="{% url 'search_quizzes' %}"
+                hx-trigger="keyup changed delay:500ms"
+                hx-target="#quiz-list"
+                hx-swap="outerHTML">
+        </div>
     </div>
     <div class="card-body">
-        {% if quizzes %}
-            <div class="list-group">
-                {% for quiz in quizzes %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-1">{{ quiz.title }}</h5>
-                            <p class="mb-1">Subject: {{ quiz.subject }}</p>
-                            <small>Questions: {{ quiz.question_count }} | Time Limit: {{ quiz.time_limit_minutes }} minutes</small>
-                        </div>
-                        <div>
-                            <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-sm btn-outline-primary">Manage</a>
-
-                            <a href="{% url 'add_question' quiz.id %}" class="btn btn-sm btn-success ms-2">Add Question</a>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-muted">You haven't created any quizzes yet. Why not create your first one now?</p>
-        {% endif %}
+        {% include 'core/teacher/partials/quiz_list_partial.html' %}
     </div>
-
-    {% if quizzes.has_other_pages %}
-    <div class="card-footer">
-        <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center">
-                {% if quizzes.has_previous %}
-                    <li class="page-item"><a class="page-link" href="?page={{ quizzes.previous_page_number }}">Previous</a></li>
-                {% else %}
-                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
-                {% endif %}
-
-                <li class="page-item disabled"><span class="page-link">Page {{ quizzes.number }} of {{ quizzes.paginator.num_pages }}</span></li>
-
-                {% if quizzes.has_next %}
-                    <li class="page-item"><a class="page-link" href="?page={{ quizzes.next_page_number }}">Next</a></li>
-                {% else %}
-                    <li class="page-item disabled"><span class="page-link">Next</span></li>
-                {% endif %}
-            </ul>
-        </nav>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}

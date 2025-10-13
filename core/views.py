@@ -56,7 +56,7 @@ def dashboard(request):
 @login_required
 @teacher_required
 def teacher_dashboard(request):
-    quizzes_list = Quiz.objects.filter(teacher=request.user)
+    quizzes_list = Quiz.objects.filter(creator=request.user)
     quizzes_with_counts = quizzes_list.annotate(question_count=Count('questions'))
 
     stats = quizzes_with_counts.aggregate(
@@ -126,6 +126,23 @@ def add_question_to_quiz(request, quiz_id):
         'quiz': quiz
     }
     return render(request, 'core/add_question.html', context)
+
+
+@login_required
+@teacher_required
+def search_quizzes(request):
+    search_text = request.GET.get('q', '').strip()
+
+    quizzes_list = Quiz.objects.filter(
+        creator=request.user,
+        title__icontains=search_text
+    ).annotate(question_count=Count('questions'))
+
+    # We don't need the full stats here, just the quizzes
+    context = {
+        'quizzes': quizzes_list,
+    }
+    return render(request, 'core/teacher/partials/quiz_list_partial.html', context)
 
 
 # --- Student-Specific Views ---
