@@ -3,8 +3,9 @@
 {% block title %}Quiz Result - PrepCBT{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto text-center pt-8 pb-12">
-    <div class="glass-panel rounded-2xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
+<div class="max-w-4xl mx-auto pt-8 pb-12">
+    <!-- Score Card -->
+    <div class="glass-panel rounded-2xl p-8 md:p-12 shadow-2xl relative overflow-hidden text-center mb-8">
 
         <!-- Decoration -->
         <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
@@ -14,18 +15,17 @@
 
         <!-- Score Circle -->
         <div class="relative w-48 h-48 mx-auto mb-10 flex items-center justify-center">
-            <!-- Outer glow -->
             <div
                 class="absolute inset-0 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse">
             </div>
 
             <svg class="transform -rotate-90 w-full h-full" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8" />
+                <!-- stroke-dasharray calculated: 2 * pi * 45 ≈ 283 -->
                 <circle cx="50" cy="50" r="45" fill="none" stroke="{{ performance.color_hex }}" stroke-width="8"
                     stroke-dasharray="{{ result.score|floatformat:0 }} 100" stroke-linecap="round"
                     class="transition-all duration-1000 ease-out"
                     style="stroke-dasharray: {{ result.score }} 283; stroke-dashoffset: 0;" />
-                <!-- Note: 2*pi*r = 2*3.14*45 = ~283 -->
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
                 <span class="text-5xl font-bold text-white">{{ result.score|floatformat:1 }}%</span>
@@ -34,28 +34,111 @@
         </div>
 
         <!-- Performance Message -->
-        <div class="mb-10 p-6 rounded-xl border backdrop-blur-md"
+        <div class="mb-6 p-6 rounded-xl border backdrop-blur-md"
             style="background-color: {{ performance.color_hex }}20; border-color: {{ performance.color_hex }}40;">
             <h4 class="text-2xl font-bold text-white mb-1">{{ performance.message }}</h4>
             <p class="text-gray-300">You scored {{ result.score|floatformat:1 }}% on this assessment.</p>
         </div>
 
-        <div class="flex flex-col sm:flex-row justify-center gap-4">
-            <!-- Review link temporarily disabled until review view is fixed -->
-            <!-- 
-            <a href="{# url 'review_quiz' quiz.id #}" class="px-8 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-all">
-                Review Answers
-            </a>
-            -->
+        <div class="flex justify-center">
             <a href="{% url 'student_dashboard' %}"
-                class="px-8 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold shadow-lg transform transition hover:scale-105 duration-300">
+                class="px-8 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white font-bold transition-all">
                 Back to Dashboard
             </a>
         </div>
+    </div>
 
-        <div class="mt-8 text-sm text-gray-500">
-            Completed on: {{ result.completed_on|date:"F j, Y, g:i a" }}
+    <!-- Questions Review Section -->
+    <div class="space-y-6">
+        <h3 class="text-2xl font-bold text-white px-2">Review Questions</h3>
+
+        {% for question in questions %}
+        <div class="glass-panel p-6 rounded-xl border border-white/5 relative overflow-hidden group">
+            <div class="flex justify-between items-start gap-4 mb-4">
+                <h4 class="text-lg font-medium text-white">
+                    <span class="text-gray-500 mr-2">Q{{ forloop.counter }}.</span>
+                    {{ question.text }}
+                </h4>
+                <button onclick="explainAI('{{ question.id }}')"
+                    class="flex-shrink-0 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Explain with AI
+                </button>
+            </div>
+
+            <div class="space-y-2 pl-4 border-l-2 border-white/10">
+                {% for option in question.options.all %}
+                <div
+                    class="flex items-center gap-3 p-2 rounded-lg {% if option.is_correct %}bg-green-500/10 border border-green-500/20{% endif %}">
+                    <div
+                        class="w-5 h-5 rounded-full flex items-center justify-center border 
+                                    {% if option.is_correct %}border-green-500 text-green-500{% else %}border-gray-500 text-transparent{% endif %}">
+                        <div class="w-2.5 h-2.5 rounded-full {% if option.is_correct %}bg-green-500{% endif %}"></div>
+                    </div>
+                    <span
+                        class="{% if option.is_correct %}text-green-300 font-medium{% else %}text-gray-400{% endif %}">
+                        {{ option.text }}
+                    </span>
+                    {% if option.is_correct %}
+                    <span class="ml-auto text-xs text-green-400 font-bold px-2 py-0.5 bg-green-500/10 rounded">CORRECT
+                        ANSWER</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- AI Explanation Container -->
+            <div id="explanation-{{ question.id }}" class="hidden mt-4 pt-4 border-t border-white/10">
+                <div class="bg-indigo-900/40 rounded-xl p-4 border border-indigo-500/30">
+                    <div class="flex items-center gap-2 mb-2 text-indigo-300 font-semibold text-sm">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                        </svg>
+                        Gemini AI Explanation
+                    </div>
+                    <p class="text-gray-200 text-sm leading-relaxed" id="explanation-text-{{ question.id }}">
+                        Loading explanation...
+                    </p>
+                </div>
+            </div>
         </div>
+        {% endfor %}
     </div>
 </div>
+
+<script>
+    async function explainAI(questionId) {
+        const container = document.getElementById(`explanation-${questionId}`);
+        const textElem = document.getElementById(`explanation-text-${questionId}`);
+
+        // Toggle visibility
+        if (!container.classList.contains('hidden')) {
+            // Already visible, maybe just close? Or re-fetch? Let's just toggle close.
+            container.classList.add('hidden');
+            return;
+        }
+
+        container.classList.remove('hidden');
+        textElem.innerHTML = '<span class="animate-pulse">Connecting to AI Tutor...</span>';
+
+        try {
+            const response = await fetch(`/student/api/explain-ai/?question_id=${questionId}`);
+            const data = await response.json();
+
+            if (data.explanation) {
+                // Formatting specific: replace newlines with <br>
+                textElem.innerHTML = data.explanation.replace(/\n/g, '<br>');
+            } else {
+                textElem.innerText = "Sorry, I couldn't generate an explanation at this moment.";
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            textElem.innerText = "Network error. Please try again.";
+        }
+    }
+</script>
 {% endblock %}

@@ -23,6 +23,7 @@ urlpatterns = [
     # --- Teacher URLs ---
     path('teacher/dashboard/', views.teacher_dashboard, name='teacher_dashboard'),
     path('teacher/quiz/create/', views.create_quiz, name='create_quiz'),
+    path('teacher/quiz/generate-ai/', views.generate_quiz_ai, name='generate_quiz_ai'),
     
     # ALABI'S NOTE: Added the new URL for our formset page.
     path('teacher/quiz/<int:quiz_id>/add-question/', views.add_question_to_quiz, name='add_question'),
@@ -30,4 +31,5 @@ urlpatterns = [
     
     # ALABI'S NOTE: Corrected this URL to pass the result_id, which the view now requires.
     path('student/result/<int:result_id>/', views.quiz_result, name='quiz_result'),
+    path('student/api/explain-ai/', views.get_explanation_ai, name='get_explanation_ai'),
 ]

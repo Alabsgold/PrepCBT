@@ -1,6 +1,13 @@
 import os
 from pathlib import Path
+try:
+    from dotenv import load_dotenv
+    # Load environment variables from .env file
+    load_dotenv()
+except ImportError:
+    pass
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'b70f24e5948b85f934f5760027281463'  # Change in production
@@ -87,6 +94,8 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 
 # Custom user model
 AUTH_USER_MODEL = 'core.User'

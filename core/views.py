@@ -1,5 +1,6 @@
 # Alabi's Note: I have cleaned up and organized all your imports here.
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count, Sum
@@ -11,8 +12,12 @@ from .forms import (
     TeacherRegistrationForm, 
     QuizForm, 
     QuestionForm, 
+    QuizForm, 
+    QuestionForm, 
     OptionFormSet
 )
+from .ai_utils import generate_quiz_content, get_ai_explanation
+from .models import Subject
 
 
 # --- General and Registration Views ---
@@ -96,6 +101,58 @@ def create_quiz(request):
 
 
 # Alabi's Note: Here is the NEW view, placed logically with other quiz management views.
+@login_required
+@teacher_required
+def generate_quiz_ai(request):
+    if request.method == 'POST':
+        topic = request.POST.get('topic')
+        subject_name = request.POST.get('subject') # Text input or select
+        difficulty = request.POST.get('difficulty', 'medium')
+        num_questions = int(request.POST.get('num_questions', 5))
+        
+        # Ensure subject exists or create it
+        subject, created = Subject.objects.get_or_create(name=subject_name)
+        
+        # Call AI
+        ai_data = generate_quiz_content(subject.name, topic, num_questions, difficulty)
+        
+        if ai_data:
+            # Create Quiz
+            quiz = Quiz.objects.create(
+                title=f"AI Quiz: {topic} ({difficulty})",
+                subject=subject,
+                subject_text=subject.name,
+                creator=request.user,
+                time_limit_minutes=num_questions * 2 # 2 mins per question default
+            )
+            
+            # Create Questions and Options
+            for q_data in ai_data:
+                question = Question.objects.create(
+                    quiz=quiz,
+                    text=q_data['text'],
+                    difficulty=difficulty,
+                    topic=topic,
+                    rationale=q_data.get('rationale', '')
+                )
+                
+                options = q_data['options'] # List of 4 strings
+                correct_idx = q_data['correct_index']
+                
+                for i, opt_text in enumerate(options):
+                    Option.objects.create(
+                        question=question,
+                        text=opt_text,
+                        is_correct=(i == correct_idx)
+                    )
+            
+            messages.success(request, f'Successfully generated quiz "{quiz.title}" with {len(ai_data)} questions!')
+            return redirect('teacher_dashboard')
+        else:
+            messages.error(request, 'Failed to generate quiz. Please check your API key or try again.')
+    
+    return render(request, 'core/teacher/generate_quiz_ai.html')
+
 @login_required
 @teacher_required
 def add_question_to_quiz(request, quiz_id):
@@ -219,7 +276,33 @@ def quiz_result(request, result_id):
     context = {
         'quiz': quiz,
         'result': result,
-        'performance': performance
+        'performance': performance,
+        'questions': quiz.questions.prefetch_related('options') # Add questions to context
     }
     # Alabi's Note: Corrected the template path
     return render(request, 'core/student/quiz_result.html', context)
+
+@login_required
+def get_explanation_ai(request):
+    if request.method == 'GET':
+        question_id = request.GET.get('question_id')
+        question = get_object_or_404(Question, id=question_id)
+        
+        # Find correct option
+        correct_option = question.options.filter(is_correct=True).first()
+        correct_text = correct_option.text if correct_option else "Unknown"
+        
+        # Check if we already have a rationale (human wrote it or AI generated it previously)
+        if question.rationale and len(question.rationale) > 10:
+            return JsonResponse({'explanation': question.rationale, 'source': 'database'})
+            
+        # Call AI
+        explanation = get_ai_explanation(question.text, correct_text)
+        
+        # Optionally save it to DB so we don't pay for it again!
+        if explanation and "Could not" not in explanation:
+            question.rationale = explanation
+            question.save()
+            
+        return JsonResponse({'explanation': explanation, 'source': 'ai'})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
