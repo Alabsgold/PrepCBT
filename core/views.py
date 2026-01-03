@@ -114,7 +114,7 @@ def generate_quiz_ai(request):
         subject, created = Subject.objects.get_or_create(name=subject_name)
         
         # Call AI
-        ai_data = generate_quiz_content(subject.name, topic, num_questions, difficulty)
+        ai_data, error = generate_quiz_content(subject.name, topic, num_questions, difficulty)
         
         if ai_data:
             # Create Quiz
@@ -149,7 +149,7 @@ def generate_quiz_ai(request):
             messages.success(request, f'Successfully generated quiz "{quiz.title}" with {len(ai_data)} questions!')
             return redirect('teacher_dashboard')
         else:
-            messages.error(request, 'Failed to generate quiz. Please check your API key or try again.')
+            messages.error(request, f'Failed to generate quiz: {error}')
     
     return render(request, 'core/teacher/generate_quiz_ai.html')
 
@@ -297,9 +297,12 @@ def get_explanation_ai(request):
             return JsonResponse({'explanation': question.rationale, 'source': 'database'})
             
         # Call AI
-        explanation = get_ai_explanation(question.text, correct_text)
+        explanation, error = get_ai_explanation(question.text, correct_text)
         
-        # Optionally save it to DB so we don't pay for it again!
+        if error:
+            # Optionally save it to DB so we don't pay for it again!
+             return JsonResponse({'error': error})
+
         if explanation and "Could not" not in explanation:
             question.rationale = explanation
             question.save()
