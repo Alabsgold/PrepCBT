@@ -18,16 +18,16 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt /app/
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
-RUN pip install djangorestframework django-cors-headers django-filter gunicorn psycopg2-binary
 
 # Copy project
 COPY . /app/
 
-# Collect static files
-# RUN python manage.py collectstatic --noinput
+# Make the build script executable
+COPY build.sh /app/
+RUN chmod +x /app/build.sh
 
 # Expose port
 EXPOSE 8000
 
-# Run gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "prep_cbt.wsgi:application"]
+# Run gunicorn through build script
+CMD ["./build.sh"]

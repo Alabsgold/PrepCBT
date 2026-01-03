@@ -1,0 +1,23 @@
+databases:
+  - name: prepcbt_db
+    databaseName: prepcbt_db
+    user: prepcbt_user
+    plan: free
+
+services:
+  - type: web
+    name: prepcbt_web
+    runtime: docker
+    plan: free
+    region: oregon
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: prepcbt_db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 2
+      - key: PYTHON_VERSION
+        value: 3.11.0
