@@ -10,10 +10,12 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini
 def generate_text_gemini(prompt):
     """
     Helper function to call Gemini API via HTTP.
+    Returns (text, error_message).
     """
     if not settings.GOOGLE_API_KEY:
-        logger.error("GOOGLE_API_KEY is not set.")
-        return None
+        msg = "GOOGLE_API_KEY is not set."
+        logger.error(msg)
+        return None, msg
 
     headers = {'Content-Type': 'application/json'}
     params = {'key': settings.GOOGLE_API_KEY}
@@ -25,24 +27,31 @@ def generate_text_gemini(prompt):
 
     try:
         response = requests.post(GEMINI_API_URL, headers=headers, params=params, json=data, timeout=30)
-        response.raise_for_status()
         
+        # Check for HTTP errors and log the body if failed
+        if response.status_code != 200:
+            msg = f"Gemini API Error: Status {response.status_code} - Body: {response.text}"
+            logger.error(msg)
+            return None, msg
+            
         result = response.json()
         # Extract text from response structure
-        # { "candidates": [ { "content": { "parts": [ { "text": "..." } ] } } ] }
         try:
-            return result['candidates'][0]['content']['parts'][0]['text']
+            return result['candidates'][0]['content']['parts'][0]['text'], None
         except (KeyError, IndexError):
-            logger.error(f"Unexpected API response structure: {result}")
-            return None
+            msg = f"Unexpected API response structure: {result}"
+            logger.error(msg)
+            return None, msg
             
     except requests.exceptions.RequestException as e:
-        logger.error(f"Gemini API Request Error: {e}")
-        return None
+        msg = f"Gemini API Request Error: {e}"
+        logger.error(msg)
+        return None, msg
 
 def generate_quiz_content(subject, topic, num_questions=5, difficulty='medium'):
     """
     Generates quiz questions using Google Gemini via REST API.
+    Returns (data, error_message).
     """
     prompt = f"""
     Create a multiple-choice quiz for the subject '{subject}' on the topic '{topic}'.
@@ -56,9 +65,9 @@ def generate_quiz_content(subject, topic, num_questions=5, difficulty='medium'):
     - "rationale": A brief explanation of the answer.
     """
 
-    text = generate_text_gemini(prompt)
-    if not text:
-        return None
+    text, error = generate_text_gemini(prompt)
+    if error:
+        return None, error
 
     # Clean up markdown if present
     if text.startswith("```json"):
@@ -70,21 +79,23 @@ def generate_quiz_content(subject, topic, num_questions=5, difficulty='medium'):
         
     try:
         data = json.loads(text.strip())
-        return data
+        return data, None
     except json.JSONDecodeError as e:
-        logger.error(f"JSON Decode Error: {e} - Content: {text}")
-        return None
+        msg = f"JSON Decode Error: {e} - Content: {text}"
+        logger.error(msg)
+        return None, msg
 
 def get_ai_explanation(question_text, correct_answer_text):
     """
     Gets an AI explanation using REST API.
+    Returns (explanation, error_message)
     """
     prompt = f"""
     Explain why '{correct_answer_text}' is the correct answer to the question: '{question_text}'.
     Provide a concise, helpful explanation for a student.
     """
     
-    explanation = generate_text_gemini(prompt)
-    if not explanation:
-        return "Could not retrieve explanation at this time."
-    return explanation
+    explanation, error = generate_text_gemini(prompt)
+    if error:
+        return None, error
+    return explanation, None
