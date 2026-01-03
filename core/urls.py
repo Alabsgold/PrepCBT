@@ -32,4 +32,8 @@ urlpatterns = [
     # ALABI'S NOTE: Corrected this URL to pass the result_id, which the view now requires.
     path('student/result/<int:result_id>/', views.quiz_result, name='quiz_result'),
     path('student/api/explain-ai/', views.get_explanation_ai, name='get_explanation_ai'),
+
+    # --- Student URLs (Added Missing Routes) ---
+    path('student/dashboard/', views.student_dashboard, name='student_dashboard'),
+    path('student/quiz/<int:quiz_id>/take/', views.take_quiz, name='take_quiz'),
 ]

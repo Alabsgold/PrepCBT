@@ -92,7 +92,7 @@
                     </div>
                     <div class="flex justify-between items-end">
                         <small class="text-gray-500 text-xs">{{ result.completed_on|date:"M d, Y" }}</small>
-                        <a href="{% url 'review_quiz' result.quiz.id %}"
+                        <a href="{% url 'quiz_result' result.id %}"
                             class="text-indigo-400 hover:text-indigo-300 text-sm font-medium hover:underline">Review</a>
                     </div>
                 </div>
