@@ -47,7 +47,7 @@ class Option(models.Model):
 
 class Result(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'is_student': True})
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='results')
     score = models.FloatField()
     completed_on = models.DateTimeField(auto_now_add=True)
     

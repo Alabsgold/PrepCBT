@@ -1,62 +1,124 @@
-{% extends 'core/base.html' %}
+{% extends 'core/layouts/base_glass.html' %}
 
-{% block title %}Add Question to {{ quiz.title }}{% endblock %}
+{% block title %}Add Question - {{ quiz.title }}{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header">
-        <h3>Add a New Question to "{{ quiz.title }}"</h3>
-    </div>
-    <div class="card-body">
-        <form method="post" novalidate>
+<div class="max-w-3xl mx-auto pb-12">
+    <div class="glass-panel rounded-2xl p-8 md:p-10 shadow-2xl relative">
+        <div class="mb-8 border-b border-gray-700/50 pb-4">
+            <h2 class="text-2xl font-bold text-white">Add Question</h2>
+            <p class="text-indigo-300 mt-1">Quiz: {{ quiz.title }}</p>
+        </div>
+
+        <form method="post" novalidate class="space-y-8">
             {% csrf_token %}
 
-            {{ form.non_field_errors }}
+            {% if form.non_field_errors %}
+            <div class="bg-red-500/10 border border-red-500/30 text-red-200 p-4 rounded-xl">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
 
-            <div class="mb-3">
-                <label class="form-label">Question Text</label>
+            <!-- Question Text -->
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-300">Question Text</label>
                 {{ form.text }}
-                {{ form.text.errors }}
+                {% if form.text.errors %}
+                <div class="text-red-400 text-sm mt-1">{{ form.text.errors }}</div>
+                {% endif %}
             </div>
-            
-            <div class="mb-4">
-                <label class="form-label">Rationale (Explanation for the answer, optional)</label>
+
+            <!-- Rationale -->
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-300">Rationale <span
+                        class="text-gray-500 text-xs">(Optional explanation)</span></label>
                 {{ form.rationale }}
-                {{ form.rationale.errors }}
+                {% if form.rationale.errors %}
+                <div class="text-red-400 text-sm mt-1">{{ form.rationale.errors }}</div>
+                {% endif %}
             </div>
 
-            <hr>
-            
-            <h5>Options</h5>
-            <p class="text-muted">Enter the text for each option below and check the box for the single correct answer.</p>
+            <div class="pt-4">
+                <h3 class="text-xl font-semibold text-white mb-2">Options</h3>
+                <p class="text-gray-400 text-sm mb-6">Enter options and mark the correct answer.</p>
 
-            {{ formset.management_form }}
-            {{ formset.non_form_errors }}
+                {{ formset.management_form }}
+                {{ formset.non_form_errors }}
 
-            {% for option_form in formset %}
-                <div class="row align-items-center mb-2">
-                    <div class="col-md-8">
-                        {{ option_form.text }}
-                        {{ option_form.text.errors }}
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-check">
-                            {{ option_form.is_correct }}
-                            <label class="form-check-label" for="{{ option_form.is_correct.id_for_label }}">
-                                Is Correct Answer
-                            </label>
+                <div class="space-y-4">
+                    {% for option_form in formset %}
+                    <div class="glass-card p-4 rounded-xl flex flex-col md:flex-row gap-4 items-start md:items-center">
+                        <div class="flex-grow w-full">
+                            {{ option_form.text }}
+                            {{ option_form.text.errors }}
+                        </div>
+                        <div class="flex-shrink-0 flex items-center gap-2 min-w-[140px]">
+                            <div class="bg-indigo-900/40 p-2 rounded-lg border border-indigo-500/30">
+                                {{ option_form.is_correct }}
+                                <label class="text-sm text-indigo-200 ml-2 cursor-pointer"
+                                    for="{{ option_form.is_correct.id_for_label }}">
+                                    Correct Answer
+                                </label>
+                            </div>
                             {{ option_form.is_correct.errors }}
                         </div>
+                        <!-- Hidden ID field for formset -->
+                        {% for hidden in option_form.hidden_fields %}
+                        {{ hidden }}
+                        {% endfor %}
                     </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
+            </div>
 
-            <div class="mt-4">
-                <button type="submit" class="btn btn-primary">Save Question</button>
-                <a href="#" class="btn btn-secondary">Cancel</a>
+            <div class="pt-8 flex items-center justify-end gap-4 border-t border-gray-700/50 mt-8">
+                <a href="{% url 'teacher_dashboard' %}"
+                    class="px-6 py-3 rounded-xl hover:bg-white/10 text-gray-300 transition-colors border border-white/10">
+                    Cancel
+                </a>
+                <button type="submit"
+                    class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg transform transition hover:scale-105 duration-300 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Save Question
+                </button>
             </div>
 
         </form>
     </div>
 </div>
+
+<style>
+    /* Styling for form inputs */
+    textarea,
+    input[type="text"] {
+        width: 100%;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s;
+    }
+
+    textarea:focus,
+    input[type="text"]:focus {
+        outline: none;
+        border-color: #818cf8;
+        background: rgba(15, 23, 42, 0.8);
+        box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+    }
+
+    /* Checkbox styling */
+    input[type="checkbox"] {
+        height: 1.25rem;
+        width: 1.25rem;
+        border-radius: 0.25rem;
+        border-color: #6366f1;
+        background-color: rgba(15, 23, 42, 0.6);
+        cursor: pointer;
+    }
+</style>
 {% endblock %}
