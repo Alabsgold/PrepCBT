@@ -1,56 +1,98 @@
-{% extends 'core/base.html' %}
+{% extends 'core/layouts/base_glass.html' %}
 
 {% block title %}Teacher Dashboard - PrepCBT{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Teacher Dashboard</h2>
-    <a href="{% url 'create_quiz' %}" class="btn btn-primary">Create New Quiz</a>
-</div>
-
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title" id="total-quizzes-stat">{{ total_quizzes }}</h5>
-                <p class="card-text">Total Quizzes</p>
-            </div>
-        </div>
+<div class="flex flex-col md:flex-row justify-between items-center mb-10">
+    <div class="mb-4 md:mb-0">
+        <h2 class="text-3xl font-bold text-white">Teacher Dashboard</h2>
+        <p class="text-gray-400 mt-1">Manage quizzes and track student performance.</p>
     </div>
-    <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title" id="total-questions-stat">{{ total_questions }}</h5>
-                <p class="card-text">Total Questions</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title" id="total-results-stat">{{ total_results }}</h5>
-                <p class="card-text">Quiz Attempts</p>
-            </div>
-        </div>
+    <div class="flex items-center gap-4">
+        <span
+            class="px-4 py-2 rounded-full bg-pink-600/30 text-pink-300 border border-pink-500/20 text-sm font-semibold">Teacher
+            Account</span>
+        <a href="{% url 'create_quiz' %}"
+            class="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-2 px-6 rounded-full shadow-lg transform transition hover:scale-105 duration-300 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6">
+                </path>
+            </svg>
+            Create Quiz
+        </a>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">Your Quizzes</h4>
-            <input
-                type="text"
-                name="q"
-                class="form-control w-50"
-                placeholder="Search quizzes by title..."
-                hx-get="{% url 'search_quizzes' %}"
-                hx-trigger="keyup changed delay:500ms"
-                hx-target="#quiz-list"
-                hx-swap="outerHTML">
+<!-- Stats Section -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+    <div class="glass-card rounded-xl p-6">
+        <div class="flex items-center gap-4">
+            <div class="bg-indigo-500/20 p-3 rounded-lg text-indigo-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-3xl font-bold text-white" id="total-quizzes-stat">{{ total_quizzes }}</h3>
+                <p class="text-gray-400 text-sm">Total Quizzes</p>
+            </div>
         </div>
     </div>
-    <div class="card-body">
+
+    <div class="glass-card rounded-xl p-6">
+        <div class="flex items-center gap-4">
+            <div class="bg-pink-500/20 p-3 rounded-lg text-pink-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-3xl font-bold text-white" id="total-questions-stat">{{ total_questions }}</h3>
+                <p class="text-gray-400 text-sm">Total Questions</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card rounded-xl p-6">
+        <div class="flex items-center gap-4">
+            <div class="bg-green-500/20 p-3 rounded-lg text-green-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-3xl font-bold text-white" id="total-results-stat">{{ total_results }}</h3>
+                <p class="text-gray-400 text-sm">Quiz Attempts</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quizzes Management Section -->
+<div class="glass-panel rounded-2xl p-6">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 pb-4 border-b border-gray-700/50 gap-4">
+        <h4 class="text-xl font-semibold text-white">Your Quizzes</h4>
+        <div class="relative w-full md:w-64">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center">
+                <svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </span>
+            <input type="text" name="q"
+                class="glass-input w-full pl-10 pr-4 py-2 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all duration-300"
+                placeholder="Search quizzes..." hx-get="{% url 'search_quizzes' %}"
+                hx-trigger="keyup changed delay:500ms" hx-target="#quiz-list" hx-swap="outerHTML">
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
         {% include 'core/teacher/partials/quiz_list_partial.html' %}
     </div>
 </div>

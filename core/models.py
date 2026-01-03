@@ -5,9 +5,18 @@ class User(AbstractUser):
     is_student = models.BooleanField(default=False)
     is_teacher = models.BooleanField(default=False)
 
+class Subject(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    
+    def __str__(self):
+        return self.name
+
 class Quiz(models.Model):
     title = models.CharField(max_length=200)
-    subject = models.CharField(max_length=100)
+    # Keeping old string field for now to avoid migration breakage, but adding FK
+    subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True, blank=True, related_name='quizzes') 
+    subject_text = models.CharField(max_length=100, blank=True, help_text="Legacy subject field") # Renamed from 'subject'
     creator = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'is_teacher': True})
     time_limit_minutes = models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -16,8 +25,15 @@ class Quiz(models.Model):
         return self.title
 
 class Question(models.Model):
+    DIFFICULTY_CHOICES = [
+        ('easy', 'Easy'),
+        ('medium', 'Medium'),
+        ('hard', 'Hard'),
+    ]
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')
     text = models.TextField()
+    difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default='medium')
+    topic = models.CharField(max_length=100, blank=True, null=True)
     # Remove option_a, option_b, etc. from here
     rationale = models.TextField(blank=True, null=True) 
     

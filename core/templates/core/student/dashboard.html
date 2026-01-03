@@ -1,67 +1,108 @@
-{% extends 'core/base.html' %}
+{% extends 'core/layouts/base_glass.html' %}
 
 {% block title %}Student Dashboard - PrepCBT{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Student Dashboard</h2>
-    <span class="badge bg-primary">Student</span>
+<div class="flex flex-col md:flex-row justify-between items-center mb-10">
+    <div class="mb-4 md:mb-0">
+        <h2 class="text-3xl font-bold text-white">Student Dashboard</h2>
+        <p class="text-gray-400 mt-1">Ready to learn? Choose a quiz below.</p>
+    </div>
+    <span
+        class="px-4 py-2 rounded-full bg-indigo-600/30 text-indigo-300 border border-indigo-500/20 text-sm font-semibold">Student
+        Account</span>
 </div>
 
-<div class="row">
-    <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4>Available Quizzes</h4>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+    <!-- Quizzes Column -->
+    <div class="lg:col-span-2">
+        <div class="glass-panel rounded-2xl p-6 h-full">
+            <div class="border-b border-gray-700/50 pb-4 mb-6">
+                <h4 class="text-xl font-semibold text-white">Available Quizzes</h4>
             </div>
-            <div class="card-body">
-                {% if quizzes %}
-                    <div class="list-group">
-                        {% for quiz in quizzes %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="mb-1">{{ quiz.title }}</h5>
-                                    <p class="mb-1">Subject: {{ quiz.subject }}</p>
-                                    <small>Time Limit: {{ quiz.time_limit_minutes }} minutes</small>
-                                </div>
-                                <a href="{% url 'take_quiz' quiz.id %}" class="btn btn-primary">Take Quiz</a>
+
+            {% if quizzes %}
+            <div class="space-y-4">
+                {% for quiz in quizzes %}
+                <div
+                    class="glass-card rounded-xl p-5 hover:bg-white/5 transition-all duration-300 transform hover:-translate-x-1 border-l-4 border-l-indigo-500 border border-white/5">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h5 class="text-lg font-bold text-white mb-2">{{ quiz.title }}</h5>
+                            <div class="flex flex-wrap gap-2 text-sm text-gray-400">
+                                {% if quiz.subject_text or quiz.subject %}
+                                <span class="bg-gray-800/50 px-2 py-1 rounded">{{
+                                    quiz.subject.name|default:quiz.subject_text }}</span>
+                                {% endif %}
+                                <span class="bg-gray-800/50 px-2 py-1 rounded flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    {{ quiz.time_limit_minutes }} mins
+                                </span>
                             </div>
-                        {% endfor %}
+                        </div>
+
+                        {% if quiz.id in taken_quiz_ids %}
+                        <button disabled
+                            class="bg-green-500/20 text-green-300 px-6 py-2 rounded-lg font-medium cursor-not-allowed border border-green-500/20">
+                            Completed
+                        </button>
+                        {% else %}
+                        <a href="{% url 'take_quiz' quiz.id %}"
+                            class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg font-medium shadow-lg shadow-indigo-600/20 transition-all duration-300 text-center w-full sm:w-auto">
+                            Start Quiz
+                        </a>
+                        {% endif %}
                     </div>
-                {% else %}
-                    <p class="text-muted">No quizzes available at the moment.</p>
-                {% endif %}
+                </div>
+                {% endfor %}
             </div>
+            {% else %}
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-gray-400">No quizzes available at the moment. Check back later!</p>
+            </div>
+            {% endif %}
         </div>
     </div>
-    
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h4>Your Recent Results</h4>
+
+    <!-- Results Column -->
+    <div class="lg:col-span-1">
+        <div class="glass-panel rounded-2xl p-6 h-full">
+            <div class="border-b border-gray-700/50 pb-4 mb-6">
+                <h4 class="text-xl font-semibold text-white">Recent Results</h4>
             </div>
-            <div class="card-body">
-                {% if results %}
-                    <div class="list-group">
-                        {% for result in results|slice:":5" %}
-                            <div class="list-group-item">
-                                <div class="d-flex justify-content-between">
-                                    <strong>{{ result.quiz.title }}</strong>
-                                    <span class="badge {% if result.score >= 70 %}bg-success{% elif result.score >= 50 %}bg-warning{% else %}bg-danger{% endif %}">
-                                        {{ result.score|floatformat:1 }}%
-                                    </span>
-                                </div>
-                                <small class="text-muted">Completed on: {{ result.completed_on|date:"M d, Y" }}</small>
-                                <div class="mt-2">
-                                    <a href="{% url 'review_quiz' result.quiz.id %}" class="btn btn-sm btn-outline-primary">Review</a>
-                                </div>
-                            </div>
-                        {% endfor %}
+
+            {% if results %}
+            <div class="space-y-4">
+                {% for result in results|slice:":5" %}
+                <div class="p-4 rounded-xl bg-gray-800/30 border border-gray-700/30">
+                    <div class="flex justify-between items-start mb-2">
+                        <strong class="text-white truncate pr-2">{{ result.quiz.title }}</strong>
+                        <span
+                            class="px-2 py-0.5 rounded text-xs font-bold {% if result.score >= 70 %}bg-green-500/20 text-green-300 border border-green-500/20{% elif result.score >= 50 %}bg-yellow-500/20 text-yellow-300 border border-yellow-500/20{% else %}bg-red-500/20 text-red-300 border border-red-500/20{% endif %}">
+                            {{ result.score|floatformat:1 }}%
+                        </span>
                     </div>
-                {% else %}
-                    <p class="text-muted">You haven't taken any quizzes yet.</p>
-                {% endif %}
+                    <div class="flex justify-between items-end">
+                        <small class="text-gray-500 text-xs">{{ result.completed_on|date:"M d, Y" }}</small>
+                        <a href="{% url 'review_quiz' result.quiz.id %}"
+                            class="text-indigo-400 hover:text-indigo-300 text-sm font-medium hover:underline">Review</a>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
+            {% else %}
+            <div class="text-center py-8">
+                <p class="text-gray-500 text-sm">You haven't taken any quizzes yet.</p>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

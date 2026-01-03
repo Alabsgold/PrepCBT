@@ -1,141 +1,80 @@
-{% extends 'core/base.html' %}
+{% extends 'core/layouts/base_glass.html' %}
 
-{% block title %}Take Quiz - PrepCBT{% endblock %}
+{% block title %}Taking {{ quiz.title }} - PrepCBT{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h3>{{ quiz.title }}</h3>
-        <div class="timer-container">
-            <span class="badge bg-danger" id="timer" data-time-limit-minutes="{{ quiz.time_limit_minutes }}">
-                Time Remaining: {{ quiz.time_limit_minutes }}:00
-            </span>
-        </div>
-    </div>
-    <div class="card-body">
-        <p class="text-muted">Subject: {{ quiz.subject }} | Questions: {{ questions.count }}</p>
-        
-        <form id="quiz-form" method="post">
-            {% csrf_token %}
-            
-            {% for question in questions %}
-                {% comment %} 
-                Alabi's Note: Added a data-question-id attribute here. 
-                This is the proper way to pass data from Django to JavaScript.
-                {% endcomment %}
-                <div class="card mb-4 question-card" data-question-id="{{ question.id }}">
-                    <div class="card-header">
-                        <h5>Question {{ forloop.counter }}</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text">{{ question.text }}</p>
-                        
-                        {% comment %} 
-                        Alabi's Note: This structure is still rigid. See my recommendation below.
-                        But for now, the fix is to make sure the name is unique and correct.
-                        {% endcomment %}
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_a" value="A" required>
-                            <label class="form-check-label" for="q{{ question.id }}_a">
-                                A. {{ question.option_a }}
-                            </label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_b" value="B" required>
-                            <label class="form-check-label" for="q{{ question.id }}_b">
-                                B. {{ question.option_b }}
-                            </label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_c" value="C" required>
-                            <label class="form-check-label" for="q{{ question.id }}_c">
-                                C. {{ question.option_c }}
-                            </label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_d" value="D" required>
-                            <label class="form-check-label" for="q{{ question.id }}_d">
-                                D. {{ question.option_d }}
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-            
-            <button type="submit" id="submit-btn" class="btn btn-primary btn-lg">Submit Answers</button>
-        </form>
-    </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const timerElement = document.getElementById('timer');
-    const quizForm = document.getElementById('quiz-form');
-    const submitBtn = document.getElementById('submit-btn');
-
-    // --- Timer Logic ---
-    const timeLimitMinutes = parseInt(timerElement.getAttribute('data-time-limit-minutes'), 10);
-    let timeRemaining = timeLimitMinutes * 60;
-    
-    // Alabi's Note: A flag to prevent multiple submissions
-    let isSubmitting = false;
-
-    function submitQuiz() {
-        if (!isSubmitting) {
-            isSubmitting = true;
-            alert('Submitting your answers.');
-            quizForm.submit();
+<div class="max-w-4xl mx-auto" x-data="{ 
+    timeRemaining: {{ quiz.time_limit_minutes }} * 60,
+    timerDisplay: '',
+    updateTimer() {
+        const minutes = Math.floor(this.timeRemaining / 60);
+        const seconds = this.timeRemaining % 60;
+        this.timerDisplay = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        if (this.timeRemaining > 0) {
+            this.timeRemaining--;
+        } else {
+            this.$refs.quizForm.submit();
         }
     }
+}" x-init="setInterval(() => updateTimer(), 1000); updateTimer()">
 
-    const timerInterval = setInterval(() => {
-        if (timeRemaining <= 0) {
-            clearInterval(timerInterval);
-            timerElement.textContent = "Time's Up!";
-            submitQuiz();
-            return;
-        }
+    <div
+        class="glass-panel sticky top-20 z-40 mb-8 rounded-xl p-4 flex justify-between items-center shadow-lg border-b-2 border-indigo-500/50">
+        <div>
+            <h2 class="text-xl font-bold text-white">{{ quiz.title }}</h2>
+            <p class="text-sm text-gray-400">Time Limit: {{ quiz.time_limit_minutes }} mins</p>
+        </div>
+        <div class="text-2xl font-mono font-bold"
+            :class="{ 'text-green-400': timeRemaining > 60, 'text-red-500 animate-pulse': timeRemaining <= 60 }"
+            x-text="timerDisplay">
+        </div>
+    </div>
 
-        timeRemaining--;
-        const minutes = Math.floor(timeRemaining / 60);
-        const seconds = timeRemaining % 60;
-        timerElement.textContent = `Time Remaining: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    <form method="post" id="quiz-form" x-ref="quizForm" class="space-y-8">
+        {% csrf_token %}
 
-    }, 1000);
+        {% for question in questions %}
+        <div class="glass-card rounded-2xl p-6 md:p-8" id="question-{{ question.id }}">
+            <div class="flex justify-between items-start mb-6 border-b border-gray-700/50 pb-4">
+                <span class="bg-indigo-600/30 text-indigo-200 px-3 py-1 rounded-lg text-sm font-semibold">
+                    Question {{ forloop.counter }}
+                </span>
+                <span class="text-gray-500 text-xs uppercase tracking-wider">Select one option</span>
+            </div>
 
-    // --- Form Submission Logic ---
-    submitBtn.addEventListener('click', function(e) {
-        e.preventDefault(); // <-- Always prevent default on button click to run validation
-        
-        const unansweredQuestions = [];
-        const questionCards = document.querySelectorAll('.question-card');
-        
-        questionCards.forEach((card, index) => {
-            const questionId = card.getAttribute('data-question-id');
-            const name = `question_${questionId}`;
-            
-            // Alabi's Note: A much more reliable check for an answered question
-            const isAnswered = quizForm.querySelector(`input[name="${name}"]:checked`);
+            <p class="text-lg md:text-xl text-gray-100 mb-8 leading-relaxed font-medium">
+                {{ question.text }}
+            </p>
 
-            if (!isAnswered) {
-                unansweredQuestions.push(index + 1); // Get the question number (e.g., 1, 2, 3...)
-            }
-        });
+            <div class="space-y-3">
+                {% for option in question.options.all %}
+                <label class="block group cursor-pointer">
+                    <input type="radio" name="question_{{ question.id }}" value="{{ option.id }}" class="peer sr-only"
+                        required>
+                    <div
+                        class="flex items-center p-4 rounded-xl border border-gray-600/50 bg-gray-800/20 hover:bg-indigo-600/10 hover:border-indigo-500/50 transition-all duration-200 peer-checked:bg-indigo-600/20 peer-checked:border-indigo-500 ring-0 peer-focus:ring-2 ring-indigo-500/30">
+                        <div
+                            class="w-6 h-6 rounded-full border border-gray-500 flex items-center justify-center mr-4 peer-checked:bg-indigo-500 peer-checked:border-indigo-500 transition-colors">
+                            <div class="w-2.5 h-2.5 bg-white rounded-full hidden peer-checked:block"></div>
+                        </div>
+                        <span class="text-gray-300 md:text-lg peer-checked:text-white">{{ option.text }}</span>
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
 
-        if (unansweredQuestions.length > 0) {
-            const confirmSubmit = confirm(`You have not answered question(s): ${unansweredQuestions.join(', ')}.\nAre you sure you want to submit?`);
-            if (confirmSubmit) {
-                clearInterval(timerInterval); // Stop timer before submitting
-                submitQuiz();
-            }
-        } else {
-            // All questions are answered
-            clearInterval(timerInterval);
-            submitQuiz();
-        }
-    });
-});
-</script>
+        <div class="flex justify-end pt-6 pb-20">
+            <button type="submit"
+                @click.prevent="if(confirm('Are you sure you want to submit your answers?')) $refs.quizForm.submit()"
+                class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold py-4 px-12 rounded-full shadow-lg shadow-green-500/30 transform transition hover:scale-105 duration-300 flex items-center gap-2">
+                <span>Submit Assessment</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </button>
+        </div>
+    </form>
+</div>
 {% endblock %}
