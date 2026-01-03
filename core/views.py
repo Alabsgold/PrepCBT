@@ -90,7 +90,7 @@ def create_quiz(request):
         form = QuizForm(request.POST)
         if form.is_valid():
             quiz = form.save(commit=False)
-            quiz.teacher = request.user # Changed from creator to teacher for consistency
+            quiz.creator = request.user # Corrected to use 'creator' field
             quiz.save()
             messages.success(request, 'Quiz created successfully! Now add some questions.')
             # Redirect to the new "add question" page for the first question
@@ -156,7 +156,7 @@ def generate_quiz_ai(request):
 @login_required
 @teacher_required
 def add_question_to_quiz(request, quiz_id):
-    quiz = get_object_or_404(Quiz, id=quiz_id, teacher=request.user)
+    quiz = get_object_or_404(Quiz, id=quiz_id, creator=request.user)
     
     if request.method == 'POST':
         form = QuestionForm(request.POST)
